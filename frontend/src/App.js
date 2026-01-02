@@ -693,7 +693,8 @@ const MealList = ({ week, leaves, employees }) => {
   const days = getDaysOfWeek(week.start);
   
   // Sadece şirket çalışanlarını filtrele (Home Office olmayanlar)
-  const officeEmployees = employees.filter(emp => emp.work_type === "Office");
+  // work_type yoksa veya "Office" ise şirket çalışanı say
+  const officeEmployees = employees.filter(emp => !emp.work_type || emp.work_type === "Office");
   const homeOfficeEmployees = employees.filter(emp => emp.work_type === "HomeOffice");
   const totalOfficeEmployees = officeEmployees.length;
   
