@@ -795,9 +795,14 @@ const MealList = ({ week, leaves, employees }) => {
       
       {/* Haftalık Özet */}
       <div className="bg-orange-50 p-3 border-t">
-        <div className="flex justify-between items-center text-sm">
+        <div className="flex flex-wrap justify-between items-center text-sm gap-2">
           <div>
-            <span className="font-medium">Toplam Şirket Personeli:</span> {totalCompanyEmployees} kişi
+            <span className="font-medium">Ofiste Çalışan:</span> {totalCompanyEmployees} kişi
+            {homeOfficeEmployees.length > 0 && (
+              <span className="ml-2 text-blue-600">
+                (Home Office: {homeOfficeEmployees.length} kişi)
+              </span>
+            )}
           </div>
           <div>
             <span className="font-medium">Haftalık Toplam Yemek:</span>{" "}
