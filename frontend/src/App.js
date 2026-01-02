@@ -321,25 +321,21 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                   required
                 />
                 <select
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  value={formData.position}
+                  onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                   className="p-2 border rounded-lg text-sm bg-white"
                 >
+                  <option value="TL">Takım Lideri</option>
                   <option value="Agent">Temsilci</option>
-                  <option value="Company">Şirket Çalışanı</option>
                 </select>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="isTeamLeader"
-                    checked={formData.is_team_leader}
-                    onChange={(e) => setFormData({ ...formData, is_team_leader: e.target.checked })}
-                    className="w-5 h-5 rounded cursor-pointer accent-blue-600"
-                  />
-                  <label htmlFor="isTeamLeader" className="text-sm text-gray-700 cursor-pointer font-medium">
-                    Takım Lideri (TL)
-                  </label>
-                </div>
+                <select
+                  value={formData.work_type}
+                  onChange={(e) => setFormData({ ...formData, work_type: e.target.value })}
+                  className="p-2 border rounded-lg text-sm bg-white"
+                >
+                  <option value="Office">Şirket Çalışanı</option>
+                  <option value="HomeOffice">Home Office</option>
+                </select>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -349,20 +345,6 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                   />
                   <span className="text-sm text-gray-600">Renk Seçin</span>
                 </div>
-                {formData.role === "Company" && (
-                  <div className="flex items-center gap-2 col-span-2">
-                    <input
-                      type="checkbox"
-                      id="homeOffice"
-                      checked={formData.home_office}
-                      onChange={(e) => setFormData({ ...formData, home_office: e.target.checked })}
-                      className="w-5 h-5 rounded cursor-pointer accent-blue-600"
-                    />
-                    <label htmlFor="homeOffice" className="text-sm text-gray-700 cursor-pointer">
-                      Home Office (Uzaktan Çalışma)
-                    </label>
-                  </div>
-                )}
               </div>
               <div className="flex gap-2 mt-4">
                 <button
