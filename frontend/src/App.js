@@ -46,17 +46,19 @@ const getWeeksOfYear2026 = () => {
 
 const getDaysOfWeek = (weekStart) => {
   const days = [];
-  const start = new Date(weekStart + 'T00:00:00');
+  const [year, month, day] = weekStart.split('-').map(Number);
+  const start = new Date(Date.UTC(year, month - 1, day));
   const dayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
   
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
-    date.setDate(start.getDate() + i);
+    date.setUTCDate(start.getUTCDate() + i);
+    const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
     days.push({
       name: dayNames[i],
-      date: date.toISOString().split('T')[0],
-      dayOfMonth: date.getDate(),
-      month: date.getMonth() + 1
+      date: dateStr,
+      dayOfMonth: date.getUTCDate(),
+      month: date.getUTCMonth() + 1
     });
   }
   return days;
