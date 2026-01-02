@@ -94,7 +94,7 @@ const EmployeeSelect = ({ employees, value, onChange, placeholder = "Temsilci Se
       <option value="">{placeholder}</option>
       {employees.map((emp) => (
         <option key={emp.id} value={emp.id}>
-          {emp.name} {emp.role === "TL" ? "(TL)" : ""}
+          {emp.name} {emp.role === "TL" ? "(TL)" : emp.role === "Company" ? "(Şirket)" : ""}
         </option>
       ))}
     </select>
