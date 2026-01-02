@@ -680,6 +680,119 @@ const LeaveTypeTable = ({ leaveTypes, employees, onDelete }) => {
   );
 };
 
+// Yemek Listesi Bileşeni
+const MealList = ({ week, leaves, employees }) => {
+  const days = getDaysOfWeek(week.start);
+  
+  // Sadece şirket çalışanlarını filtrele
+  const companyEmployees = employees.filter(emp => emp.role === "Company");
+  const totalCompanyEmployees = companyEmployees.length;
+  
+  // Her gün için çalışan (izinli olmayan) kişileri hesapla
+  const getDayData = (day) => {
+    const dayLeaves = leaves.filter(l => l.date === day.date);
+    const onLeaveIds = dayLeaves.map(l => l.employee_id);
+    const workingEmployees = companyEmployees.filter(emp => !onLeaveIds.includes(emp.id));
+    const onLeaveEmployees = companyEmployees.filter(emp => onLeaveIds.includes(emp.id));
+    
+    return {
+      working: workingEmployees,
+      onLeave: onLeaveEmployees,
+      count: workingEmployees.length
+    };
+  };
+
+  // Haftalık toplam yemek sayısı
+  const weeklyTotal = days.reduce((total, day) => total + getDayData(day).count, 0);
+
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
+      <div className="bg-orange-500 text-white text-center py-2 font-bold text-sm">
+        {week.label} - Yemek Listesi
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="p-2 text-left border-r">Gün</th>
+              <th className="p-2 text-left border-r">Tarih</th>
+              <th className="p-2 text-center border-r">Yemek Adedi</th>
+              <th className="p-2 text-left border-r">Çalışan Personel</th>
+              <th className="p-2 text-left">İzinli Personel</th>
+            </tr>
+          </thead>
+          <tbody>
+            {days.map((day) => {
+              const dayData = getDayData(day);
+              return (
+                <tr key={day.date} className="border-b hover:bg-gray-50">
+                  <td className="p-2 font-medium border-r">{day.name}</td>
+                  <td className="p-2 border-r">{day.dayOfMonth}/{day.month}</td>
+                  <td className="p-2 text-center border-r">
+                    <span className="bg-orange-500 text-white px-3 py-1 rounded-full font-bold">
+                      {dayData.count}
+                    </span>
+                  </td>
+                  <td className="p-2 border-r">
+                    <div className="flex flex-wrap gap-1">
+                      {dayData.working.length > 0 ? (
+                        dayData.working.map(emp => (
+                          <span
+                            key={emp.id}
+                            className="px-2 py-1 rounded text-white text-xs"
+                            style={{ backgroundColor: emp.color }}
+                          >
+                            {emp.short_name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="p-2">
+                    <div className="flex flex-wrap gap-1">
+                      {dayData.onLeave.length > 0 ? (
+                        dayData.onLeave.map(emp => (
+                          <span
+                            key={emp.id}
+                            className="px-2 py-1 rounded text-white text-xs opacity-60"
+                            style={{ backgroundColor: emp.color }}
+                          >
+                            {emp.short_name}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-gray-400 text-xs">-</span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      
+      {/* Haftalık Özet */}
+      <div className="bg-orange-50 p-3 border-t">
+        <div className="flex justify-between items-center text-sm">
+          <div>
+            <span className="font-medium">Toplam Şirket Personeli:</span> {totalCompanyEmployees} kişi
+          </div>
+          <div>
+            <span className="font-medium">Haftalık Toplam Yemek:</span>{" "}
+            <span className="bg-orange-500 text-white px-3 py-1 rounded-full font-bold">
+              {weeklyTotal}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TabButton = ({ active, onClick, children, color }) => (
   <button
     onClick={onClick}
