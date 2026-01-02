@@ -54,9 +54,10 @@ class Employee(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     short_name: str
-    role: str = "Agent"  # TL or Agent or Company
+    role: str = "Agent"  # Agent or Company
     color: str = "#607D8B"
     home_office: bool = False  # For Company employees
+    is_team_leader: bool = False  # TL checkbox
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class EmployeeCreate(BaseModel):
@@ -65,6 +66,7 @@ class EmployeeCreate(BaseModel):
     role: str = "Agent"
     color: Optional[str] = None
     home_office: bool = False
+    is_team_leader: bool = False
 
 class EmployeeUpdate(BaseModel):
     name: Optional[str] = None
@@ -72,6 +74,7 @@ class EmployeeUpdate(BaseModel):
     role: Optional[str] = None
     color: Optional[str] = None
     home_office: Optional[bool] = None
+    is_team_leader: Optional[bool] = None
 
 class LeaveEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
