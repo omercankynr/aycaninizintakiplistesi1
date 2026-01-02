@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
-from datetime import datetime, timezone, date
+from datetime import datetime, timezone
 from enum import Enum
 
 ROOT_DIR = Path(__file__).parent
@@ -25,8 +25,15 @@ app = FastAPI()
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
-# Employee list with colors
-EMPLOYEES = [
+# Default colors for employees
+DEFAULT_COLORS = [
+    "#E91E63", "#2196F3", "#FF5722", "#9C27B0", "#00BCD4", "#4CAF50",
+    "#CDDC39", "#FF9800", "#795548", "#607D8B", "#F44336", "#673AB7",
+    "#3F51B5", "#009688", "#8BC34A", "#FFC107", "#FF5252", "#7C4DFF"
+]
+
+# Default employees to seed if none exist
+DEFAULT_EMPLOYEES = [
     {"id": "ayca_cisem", "name": "AYÇA ÇİSEM ÇOBAN", "short_name": "AYÇA Ç.", "role": "TL", "color": "#E91E63"},
     {"id": "enis", "name": "ENİS USLU", "short_name": "ENİS U.", "role": "TL", "color": "#2196F3"},
     {"id": "onur", "name": "ONUR KARAGÜLER", "short_name": "ONUR K.", "role": "TL", "color": "#FF5722"},
@@ -42,6 +49,27 @@ EMPLOYEES = [
 ]
 
 # Define Models
+class Employee(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    short_name: str
+    role: str = "Agent"  # TL or Agent
+    color: str = "#607D8B"
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class EmployeeCreate(BaseModel):
+    name: str
+    short_name: str
+    role: str = "Agent"
+    color: Optional[str] = None
+
+class EmployeeUpdate(BaseModel):
+    name: Optional[str] = None
+    short_name: Optional[str] = None
+    role: Optional[str] = None
+    color: Optional[str] = None
+
 class LeaveEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -56,10 +84,6 @@ class LeaveEntryCreate(BaseModel):
     date: str
     week_start: str
     slot: int
-
-class LeaveEntryDelete(BaseModel):
-    employee_id: str
-    date: str
 
 class OvertimeEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -94,20 +118,81 @@ class LeaveTypeEntryCreate(BaseModel):
     leave_type: LeaveTypeEnum
     hours: Optional[float] = None
 
+# Startup event to seed default employees
+@app.on_event("startup")
+async def startup_event():
+    # Check if employees collection is empty
+    count = await db.employees.count_documents({})
+    if count == 0:
+        # Seed default employees
+        for emp in DEFAULT_EMPLOYEES:
+            emp_obj = Employee(**emp)
+            doc = emp_obj.model_dump()
+            doc['created_at'] = doc['created_at'].isoformat()
+            await db.employees.insert_one(doc)
+        logging.info("Seeded default employees")
+
 # Endpoints
 @api_router.get("/")
 async def root():
     return {"message": "İzin Yönetim Sistemi API"}
 
+# Employee Endpoints
 @api_router.get("/employees")
 async def get_employees():
-    return EMPLOYEES
+    employees = await db.employees.find({}, {"_id": 0}).to_list(1000)
+    return employees
+
+@api_router.post("/employees", response_model=Employee)
+async def create_employee(input: EmployeeCreate):
+    # Auto-assign color if not provided
+    if not input.color:
+        count = await db.employees.count_documents({})
+        input.color = DEFAULT_COLORS[count % len(DEFAULT_COLORS)]
+    
+    emp_obj = Employee(**input.model_dump())
+    doc = emp_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.employees.insert_one(doc)
+    return emp_obj
+
+@api_router.put("/employees/{employee_id}", response_model=Employee)
+async def update_employee(employee_id: str, input: EmployeeUpdate):
+    update_data = {k: v for k, v in input.model_dump().items() if v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Güncellenecek alan belirtilmedi")
+    
+    result = await db.employees.update_one(
+        {"id": employee_id},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Temsilci bulunamadı")
+    
+    employee = await db.employees.find_one({"id": employee_id}, {"_id": 0})
+    return employee
+
+@api_router.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: str):
+    # Check if employee has any leaves
+    leave_count = await db.leaves.count_documents({"employee_id": employee_id})
+    if leave_count > 0:
+        raise HTTPException(status_code=400, detail="Bu temsilcinin izin kayıtları var. Önce izinleri silin.")
+    
+    result = await db.employees.delete_one({"id": employee_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Temsilci bulunamadı")
+    
+    return {"message": "Temsilci silindi"}
 
 # Leave Entry Endpoints
 @api_router.post("/leaves", response_model=LeaveEntry)
 async def create_leave_entry(input: LeaveEntryCreate):
-    # Validate employee
-    if not any(e["id"] == input.employee_id for e in EMPLOYEES):
+    # Validate employee exists
+    employee = await db.employees.find_one({"id": input.employee_id})
+    if not employee:
         raise HTTPException(status_code=400, detail="Geçersiz çalışan ID")
     
     # Check validation rules
@@ -159,17 +244,11 @@ async def delete_leave(leave_id: str):
         raise HTTPException(status_code=404, detail="İzin kaydı bulunamadı")
     return {"message": "İzin silindi"}
 
-@api_router.delete("/leaves")
-async def delete_leave_by_criteria(employee_id: str, date: str):
-    result = await db.leaves.delete_one({"employee_id": employee_id, "date": date})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="İzin kaydı bulunamadı")
-    return {"message": "İzin silindi"}
-
 # Overtime Endpoints
 @api_router.post("/overtime", response_model=OvertimeEntry)
 async def create_overtime_entry(input: OvertimeEntryCreate):
-    if not any(e["id"] == input.employee_id for e in EMPLOYEES):
+    employee = await db.employees.find_one({"id": input.employee_id})
+    if not employee:
         raise HTTPException(status_code=400, detail="Geçersiz çalışan ID")
     
     overtime_obj = OvertimeEntry(**input.model_dump())
@@ -194,7 +273,8 @@ async def delete_overtime(overtime_id: str):
 # Leave Type Endpoints
 @api_router.post("/leave-types", response_model=LeaveTypeEntry)
 async def create_leave_type_entry(input: LeaveTypeEntryCreate):
-    if not any(e["id"] == input.employee_id for e in EMPLOYEES):
+    employee = await db.employees.find_one({"id": input.employee_id})
+    if not employee:
         raise HTTPException(status_code=400, detail="Geçersiz çalışan ID")
     
     if input.leave_type == LeaveTypeEnum.COMPENSATORY and not input.hours:
