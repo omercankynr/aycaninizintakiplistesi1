@@ -692,15 +692,14 @@ function App() {
   const [leaves, setLeaves] = useState([]);
   const [overtime, setOvertime] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(2025);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedMonth, setSelectedMonth] = useState(0); // Ocak ile başla
   const [activeTab, setActiveTab] = useState("schedule");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rulesCollapsed, setRulesCollapsed] = useState(true);
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
 
-  const allWeeks = getWeeksOfYear(selectedYear);
+  const allWeeks = getWeeksOfYear2026();
   
   const weeksOfMonth = allWeeks.filter(week => {
     const weekStart = new Date(week.start);
