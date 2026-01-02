@@ -6,34 +6,33 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
 // Helper functions
-const getWeeksOfYear = (year) => {
+const getWeeksOfYear2026 = () => {
   const weeks = [];
-  let currentDate = new Date(year, 0, 1);
+  // 2026 yılı için haftalar - Pazartesi'den Pazar'a
+  // İlk hafta: 29 Aralık 2025 (Pazartesi) - 4 Ocak 2026 (Pazar)
+  let currentDate = new Date(2025, 11, 29); // 29 Aralık 2025 Pazartesi
   
-  const dayOfWeek = currentDate.getDay();
-  if (dayOfWeek !== 0) {
-    currentDate.setDate(currentDate.getDate() - dayOfWeek);
-  }
+  const formatDateLabel = (date) => {
+    const day = date.getDate();
+    const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
+                    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    return `${day} ${months[date.getMonth()]}`;
+  };
   
-  while (currentDate.getFullYear() <= year) {
+  // 2026 yılı sonuna kadar (yaklaşık 53 hafta)
+  while (currentDate.getFullYear() <= 2026) {
     const weekStart = new Date(currentDate);
     const weekEnd = new Date(currentDate);
     weekEnd.setDate(weekEnd.getDate() + 6);
     
-    if (weekStart.getFullYear() > year) break;
-    
-    const formatDateLabel = (date) => {
-      const day = date.getDate();
-      const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
-                      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
-      return `${day} ${months[date.getMonth()]}`;
-    };
+    // 2027'ye geçtiyse dur
+    if (weekStart.getFullYear() > 2026 && weekStart.getMonth() > 0) break;
     
     weeks.push({
       start: weekStart.toISOString().split('T')[0],
       end: weekEnd.toISOString().split('T')[0],
       label: `${formatDateLabel(weekStart)} - ${formatDateLabel(weekEnd)}`,
-      month: weekStart.getMonth()
+      month: weekEnd.getMonth() // Haftanın çoğunluğunun ait olduğu ay
     });
     
     currentDate.setDate(currentDate.getDate() + 7);
