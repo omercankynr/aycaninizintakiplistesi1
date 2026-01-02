@@ -327,9 +327,20 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                   className="p-2 border rounded-lg text-sm bg-white"
                 >
                   <option value="Agent">Temsilci</option>
-                  <option value="TL">Takım Lideri (TL)</option>
                   <option value="Company">Şirket Çalışanı</option>
                 </select>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="isTeamLeader"
+                    checked={formData.is_team_leader}
+                    onChange={(e) => setFormData({ ...formData, is_team_leader: e.target.checked })}
+                    className="w-5 h-5 rounded cursor-pointer accent-blue-600"
+                  />
+                  <label htmlFor="isTeamLeader" className="text-sm text-gray-700 cursor-pointer font-medium">
+                    Takım Lideri (TL)
+                  </label>
+                </div>
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
@@ -346,7 +357,7 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                       id="homeOffice"
                       checked={formData.home_office}
                       onChange={(e) => setFormData({ ...formData, home_office: e.target.checked })}
-                      className="w-5 h-5 rounded cursor-pointer"
+                      className="w-5 h-5 rounded cursor-pointer accent-blue-600"
                     />
                     <label htmlFor="homeOffice" className="text-sm text-gray-700 cursor-pointer">
                       Home Office (Uzaktan Çalışma)
