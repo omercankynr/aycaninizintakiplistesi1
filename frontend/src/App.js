@@ -849,24 +849,13 @@ function App() {
       <header className="bg-blue-700 text-white py-3 shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold">İzin Yönetim Sistemi</h1>
+            <h1 className="text-xl font-bold">İzin Yönetim Sistemi - 2026</h1>
             <button
               onClick={() => setShowEmployeeManagement(true)}
               className="bg-blue-600 hover:bg-blue-800 px-3 py-1 rounded text-sm font-medium"
             >
               Temsilci Yönetimi
             </button>
-          </div>
-          <div className="flex justify-center items-center gap-2 mt-2">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-              className="bg-blue-600 text-white border border-blue-500 rounded px-2 py-1 text-sm"
-            >
-              <option value={2024}>2024</option>
-              <option value={2025}>2025</option>
-              <option value={2026}>2026</option>
-            </select>
           </div>
         </div>
       </header>
