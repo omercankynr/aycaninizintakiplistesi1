@@ -256,7 +256,7 @@ const RulesPanel = ({ collapsed, onToggle }) => {
 const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: "", short_name: "", role: "Agent", color: "", home_office: false, is_team_leader: false });
+  const [formData, setFormData] = useState({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -267,7 +267,7 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
       } else {
         onAdd(formData);
       }
-      setFormData({ name: "", short_name: "", role: "Agent", color: "", home_office: false, is_team_leader: false });
+      setFormData({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
       setShowAddForm(false);
     }
   };
@@ -277,17 +277,16 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
     setFormData({
       name: emp.name,
       short_name: emp.short_name,
-      role: emp.role,
-      color: emp.color,
-      home_office: emp.home_office || false,
-      is_team_leader: emp.is_team_leader || false
+      position: emp.position || "Agent",
+      work_type: emp.work_type || "Office",
+      color: emp.color
     });
     setShowAddForm(true);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ name: "", short_name: "", role: "Agent", color: "", home_office: false, is_team_leader: false });
+    setFormData({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
     setShowAddForm(false);
   };
 
