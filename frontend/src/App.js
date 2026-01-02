@@ -8,9 +8,8 @@ const API = `${BACKEND_URL}/api`;
 // Helper functions
 const getWeeksOfYear = (year) => {
   const weeks = [];
-  let currentDate = new Date(year, 0, 1); // 1 Ocak
+  let currentDate = new Date(year, 0, 1);
   
-  // Haftanın başlangıcını Pazar olarak ayarla
   const dayOfWeek = currentDate.getDay();
   if (dayOfWeek !== 0) {
     currentDate.setDate(currentDate.getDate() - dayOfWeek);
@@ -21,7 +20,6 @@ const getWeeksOfYear = (year) => {
     const weekEnd = new Date(currentDate);
     weekEnd.setDate(weekEnd.getDate() + 6);
     
-    // Yılın sonuna kadar devam et
     if (weekStart.getFullYear() > year) break;
     
     const formatDateLabel = (date) => {
@@ -74,6 +72,12 @@ const formatDate = (dateStr) => {
 const MONTHS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
   "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+];
+
+const DEFAULT_COLORS = [
+  "#E91E63", "#2196F3", "#FF5722", "#9C27B0", "#00BCD4", "#4CAF50",
+  "#CDDC39", "#FF9800", "#795548", "#607D8B", "#F44336", "#673AB7",
+  "#3F51B5", "#009688", "#8BC34A", "#FFC107", "#FF5252", "#7C4DFF"
 ];
 
 // Components
@@ -241,6 +245,164 @@ const RulesPanel = ({ collapsed, onToggle }) => {
           </ul>
         </div>
       )}
+    </div>
+  );
+};
+
+// Employee Management Component
+const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) => {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [formData, setFormData] = useState({ name: "", short_name: "", role: "Agent", color: "" });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (formData.name && formData.short_name) {
+      if (editingId) {
+        onUpdate(editingId, formData);
+        setEditingId(null);
+      } else {
+        onAdd(formData);
+      }
+      setFormData({ name: "", short_name: "", role: "Agent", color: "" });
+      setShowAddForm(false);
+    }
+  };
+
+  const startEdit = (emp) => {
+    setEditingId(emp.id);
+    setFormData({
+      name: emp.name,
+      short_name: emp.short_name,
+      role: emp.role,
+      color: emp.color
+    });
+    setShowAddForm(true);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setFormData({ name: "", short_name: "", role: "Agent", color: "" });
+    setShowAddForm(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+        <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold">Temsilci Yönetimi</h2>
+          <button onClick={onClose} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+        </div>
+        
+        <div className="p-4 overflow-y-auto max-h-[calc(90vh-120px)]">
+          {/* Add/Edit Form */}
+          {showAddForm ? (
+            <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg mb-4">
+              <h3 className="font-bold mb-3">{editingId ? "Temsilci Düzenle" : "Yeni Temsilci Ekle"}</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  type="text"
+                  placeholder="Ad Soyad (örn: AHMET YILMAZ)"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                  className="p-2 border rounded-lg text-sm"
+                  required
+                />
+                <input
+                  type="text"
+                  placeholder="Kısa Ad (örn: AHMET Y.)"
+                  value={formData.short_name}
+                  onChange={(e) => setFormData({ ...formData, short_name: e.target.value.toUpperCase() })}
+                  className="p-2 border rounded-lg text-sm"
+                  required
+                />
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  className="p-2 border rounded-lg text-sm bg-white"
+                >
+                  <option value="Agent">Temsilci</option>
+                  <option value="TL">Takım Lideri (TL)</option>
+                </select>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={formData.color || DEFAULT_COLORS[employees.length % DEFAULT_COLORS.length]}
+                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-10 h-10 rounded cursor-pointer"
+                  />
+                  <span className="text-sm text-gray-600">Renk Seçin</span>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-4">
+                <button
+                  type="submit"
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 text-sm font-medium"
+                >
+                  {editingId ? "Güncelle" : "Ekle"}
+                </button>
+                <button
+                  type="button"
+                  onClick={cancelEdit}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 text-sm font-medium"
+                >
+                  İptal
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="w-full bg-blue-500 text-white p-3 rounded-lg hover:bg-blue-600 font-medium mb-4"
+            >
+              + Yeni Temsilci Ekle
+            </button>
+          )}
+
+          {/* Employee List */}
+          <div className="space-y-2">
+            {employees.map((emp) => (
+              <div
+                key={emp.id}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs"
+                    style={{ backgroundColor: emp.color }}
+                  >
+                    {emp.short_name.substring(0, 2)}
+                  </div>
+                  <div>
+                    <div className="font-medium">{emp.name}</div>
+                    <div className="text-sm text-gray-500">
+                      {emp.role === "TL" ? "Takım Lideri" : "Temsilci"} • {emp.short_name}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => startEdit(emp)}
+                    className="text-blue-500 hover:text-blue-700 px-2 py-1 text-sm"
+                  >
+                    Düzenle
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm(`${emp.name} silinsin mi?`)) {
+                        onDelete(emp.id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 px-2 py-1 text-sm"
+                  >
+                    Sil
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
@@ -538,10 +700,10 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rulesCollapsed, setRulesCollapsed] = useState(true);
+  const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
 
   const allWeeks = getWeeksOfYear(selectedYear);
   
-  // Seçili aya ait haftaları filtrele
   const weeksOfMonth = allWeeks.filter(week => {
     const weekStart = new Date(week.start);
     const weekEnd = new Date(week.end);
@@ -573,6 +735,34 @@ function App() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Employee CRUD
+  const handleAddEmployee = async (data) => {
+    try {
+      await axios.post(`${API}/employees`, data);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Temsilci eklenirken hata oluştu");
+    }
+  };
+
+  const handleUpdateEmployee = async (id, data) => {
+    try {
+      await axios.put(`${API}/employees/${id}`, data);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Temsilci güncellenirken hata oluştu");
+    }
+  };
+
+  const handleDeleteEmployee = async (id) => {
+    try {
+      await axios.delete(`${API}/employees/${id}`);
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.detail || "Temsilci silinirken hata oluştu");
+    }
+  };
 
   const handleAddLeave = async (date, employeeId, slot) => {
     try {
@@ -659,9 +849,17 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
-      <header className="bg-blue-700 text-white py-3 shadow-lg sticky top-0 z-50">
+      <header className="bg-blue-700 text-white py-3 shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-4">
-          <h1 className="text-xl font-bold text-center">İzin Yönetim Sistemi</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-bold">İzin Yönetim Sistemi</h1>
+            <button
+              onClick={() => setShowEmployeeManagement(true)}
+              className="bg-blue-600 hover:bg-blue-800 px-3 py-1 rounded text-sm font-medium"
+            >
+              Temsilci Yönetimi
+            </button>
+          </div>
           <div className="flex justify-center items-center gap-2 mt-2">
             <select
               value={selectedYear}
@@ -675,6 +873,17 @@ function App() {
           </div>
         </div>
       </header>
+
+      {/* Employee Management Modal */}
+      {showEmployeeManagement && (
+        <EmployeeManagement
+          employees={employees}
+          onAdd={handleAddEmployee}
+          onUpdate={handleUpdateEmployee}
+          onDelete={handleDeleteEmployee}
+          onClose={() => setShowEmployeeManagement(false)}
+        />
+      )}
 
       {/* Main Content */}
       <main className="container mx-auto px-2 py-4">
@@ -705,7 +914,6 @@ function App() {
 
         {activeTab === "schedule" && (
           <>
-            {/* Rules Panel */}
             <RulesPanel 
               collapsed={rulesCollapsed} 
               onToggle={() => setRulesCollapsed(!rulesCollapsed)} 
@@ -744,7 +952,7 @@ function App() {
 
             {/* Employee Legend */}
             <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="font-bold text-lg mb-3 text-gray-800">Temsilciler</h3>
+              <h3 className="font-bold text-lg mb-3 text-gray-800">Temsilciler ({employees.length})</h3>
               <div className="flex flex-wrap gap-2">
                 {employees.map((emp) => (
                   <div
