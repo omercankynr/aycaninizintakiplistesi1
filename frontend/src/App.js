@@ -1131,12 +1131,17 @@ function App() {
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
               <h3 className="font-bold text-lg text-orange-800 mb-2">Şirket Çalışanları Yemek Listesi</h3>
               <p className="text-sm text-orange-700">
-                Bu liste sadece "Şirket Çalışanı" rolündeki personeli gösterir. 
-                İzinli olmayan personel sayısına göre günlük yemek adedi hesaplanır.
+                Bu liste sadece "Şirket Çalışanı" rolündeki ve ofiste çalışan personeli gösterir. 
+                Home Office çalışanlar yemek listesine dahil edilmez.
               </p>
-              <p className="text-sm text-orange-600 mt-2">
-                <strong>Toplam Şirket Çalışanı:</strong> {employees.filter(e => e.role === "Company").length} kişi
-              </p>
+              <div className="flex flex-wrap gap-4 mt-2 text-sm">
+                <p className="text-orange-600">
+                  <strong>Ofiste Çalışan:</strong> {employees.filter(e => e.role === "Company" && !e.home_office).length} kişi
+                </p>
+                <p className="text-blue-600">
+                  <strong>Home Office:</strong> {employees.filter(e => e.role === "Company" && e.home_office).length} kişi
+                </p>
+              </div>
             </div>
 
             {/* Month Selector */}
