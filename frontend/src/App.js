@@ -326,6 +326,7 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                 >
                   <option value="Agent">Temsilci</option>
                   <option value="TL">Takım Lideri (TL)</option>
+                  <option value="Company">Şirket Çalışanı</option>
                 </select>
                 <div className="flex items-center gap-2">
                   <input
