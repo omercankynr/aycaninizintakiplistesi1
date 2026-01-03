@@ -20,10 +20,22 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(
+    title="Ayça İzin Takip API",
+    version="1.0.0"
+)
+
+@app.get("/")
+def root():
+    return {"status": "API ayakta"}
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+@api_router.get("/ping")
+def ping():
+    return {"pong": True}
+
 
 # Default colors for employees
 DEFAULT_COLORS = [
@@ -323,3 +335,4 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
