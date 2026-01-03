@@ -33,6 +33,9 @@ app = FastAPI(
 def root():
     return {"status": "API ayakta"}
 
+
+
+
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
