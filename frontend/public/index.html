@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="İzin Yönetim Sistemi" />
 
-    <title>MADE BY WITH AYÇA <3 - 2026</title>
+    <title>MADE BY WITH AYÇA &lt;3 - 2026</title>
 
     <!-- Emergent badge + edit scripts (kalsın) -->
     <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
@@ -30,10 +30,16 @@
   </head>
 
   <body>
-    <noscript>Bu uygulamayı çalıştırmak için JavaScript açık olmalıdır.</noscript>
+    <noscript>
+      Bu uygulamayı çalıştırmak için JavaScript açık olmalıdır.
+    </noscript>
     <div id="root"></div>
 
-    <!-- ✅ KRİTİK: Vite giriş dosyası module olarak yüklenmeli -->
-    <script type="module" src="/src/main.jsx"></script>
+    <!--
+      KRİTİK NOT:
+      Bu proje CRA (Create React App) olduğu için burada Vite gibi
+      <script type="module" src="/src/main.jsx"> OLMAZ.
+      React giriş dosyan src/index.js üzerinden çalışır.
+    -->
   </body>
 </html>
