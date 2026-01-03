@@ -674,12 +674,16 @@ const LeaveTypeTable = ({ leaveTypes, employees, onDelete }) => {
                       {item.leave_type === "compensatory" && item.hours ? `${item.hours} saat` : "-"}
                     </td>
                     <td className="p-2">
-                      <button
-                        onClick={() => onDelete(item.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        Sil
-                      </button>
+                      {onDelete ? (
+                        <button
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Sil
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 );
