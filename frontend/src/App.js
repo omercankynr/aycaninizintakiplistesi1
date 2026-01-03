@@ -851,7 +851,10 @@ function App() {
   });
 
   // Mevcut kullanıcı TL mi?
-  const currentUser = employees.find(e => e.id === currentUserId);
+  const currentUser = Array.isArray(employees)
+  ? employees.find(e => String(e.id) === String(currentUserId))
+  : null;
+
   const isTeamLeader = currentUser?.position === "TL";
 
   const handleUserChange = (userId) => {
