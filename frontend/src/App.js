@@ -1143,9 +1143,10 @@ function App() {
               >
                 <option value="">Kullanıcı Seçin</option>
                 {safeEmployees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.short_name} {emp.position === "TL" ? "(TL)" : ""}
-                  </option>
+                  <option key={emp.id} value={String(emp.id)}>
+  {emp.short_name} {emp.position === "TL" ? "(TL)" : ""}
+</option>
+
                 ))}
               </select>
 
