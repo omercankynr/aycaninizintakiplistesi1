@@ -992,15 +992,36 @@ function App() {
       {/* Header */}
       <header className="bg-blue-700 text-white py-3 shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center flex-wrap gap-2">
             <h1 className="text-xl font-bold">İzin Yönetim Sistemi - 2026</h1>
-            <button
-              onClick={() => setShowEmployeeManagement(true)}
-              className="bg-blue-600 hover:bg-blue-800 px-3 py-1 rounded text-sm font-medium"
-            >
-              Temsilci Yönetimi
-            </button>
+            <div className="flex items-center gap-2">
+              <select
+                value={currentUserId}
+                onChange={(e) => handleUserChange(e.target.value)}
+                className="bg-blue-600 text-white border border-blue-500 rounded px-2 py-1 text-sm"
+              >
+                <option value="">Kullanıcı Seçin</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.short_name} {emp.position === "TL" ? "(TL)" : ""}
+                  </option>
+                ))}
+              </select>
+              {isTeamLeader && (
+                <button
+                  onClick={() => setShowEmployeeManagement(true)}
+                  className="bg-blue-600 hover:bg-blue-800 px-3 py-1 rounded text-sm font-medium"
+                >
+                  Temsilci Yönetimi
+                </button>
+              )}
+            </div>
           </div>
+          {currentUser && (
+            <div className="text-center text-blue-200 text-sm mt-1">
+              Hoşgeldin, {currentUser.name} {isTeamLeader && "(Takım Lideri)"}
+            </div>
+          )}
         </div>
       </header>
 
