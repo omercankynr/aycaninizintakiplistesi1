@@ -1,64 +1,77 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import "@/App.css";
 import axios from "axios";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// Helper functions
+// -------------------- Helper functions --------------------
 const getWeeksOfYear2026 = () => {
   const weeks = [];
-  // 2026 yılı için haftalar - Pazartesi'den Pazar'a
-  // İlk hafta: 29 Aralık 2025 (Pazartesi) - 4 Ocak 2026 (Pazar)
   let currentDate = new Date(Date.UTC(2025, 11, 29)); // 29 Aralık 2025 Pazartesi
-  
+
   const formatDateLabel = (date) => {
     const day = date.getUTCDate();
-    const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
-                    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+    const months = [
+      "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+      "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+    ];
     return `${day} ${months[date.getUTCMonth()]}`;
   };
-  
-  // 2026 yılı sonuna kadar
+
   while (currentDate.getUTCFullYear() <= 2026) {
     const weekStart = new Date(currentDate);
     const weekEnd = new Date(currentDate);
     weekEnd.setUTCDate(weekEnd.getUTCDate() + 6);
-    
-    // 2027'ye geçtiyse dur
+
     if (weekStart.getUTCFullYear() > 2026 && weekStart.getUTCMonth() > 0) break;
-    
-    const startStr = `${weekStart.getUTCFullYear()}-${String(weekStart.getUTCMonth() + 1).padStart(2, '0')}-${String(weekStart.getUTCDate()).padStart(2, '0')}`;
-    const endStr = `${weekEnd.getUTCFullYear()}-${String(weekEnd.getUTCMonth() + 1).padStart(2, '0')}-${String(weekEnd.getUTCDate()).padStart(2, '0')}`;
-    
+
+    const startStr = `${weekStart.getUTCFullYear()}-${String(
+      weekStart.getUTCMonth() + 1
+    ).padStart(2, "0")}-${String(weekStart.getUTCDate()).padStart(2, "0")}`;
+
+    const endStr = `${weekEnd.getUTCFullYear()}-${String(
+      weekEnd.getUTCMonth() + 1
+    ).padStart(2, "0")}-${String(weekEnd.getUTCDate()).padStart(2, "0")}`;
+
     weeks.push({
       start: startStr,
       end: endStr,
       label: `${formatDateLabel(weekStart)} - ${formatDateLabel(weekEnd)}`,
-      month: weekEnd.getUTCMonth()
+      month: weekEnd.getUTCMonth(),
     });
-    
+
     currentDate.setUTCDate(currentDate.getUTCDate() + 7);
   }
-  
+
   return weeks;
 };
 
 const getDaysOfWeek = (weekStart) => {
   const days = [];
-  const [year, month, day] = weekStart.split('-').map(Number);
+  const [year, month, day] = weekStart.split("-").map(Number);
   const start = new Date(Date.UTC(year, month - 1, day));
-  const dayNames = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
-  
+  const dayNames = [
+    "Pazartesi",
+    "Salı",
+    "Çarşamba",
+    "Perşembe",
+    "Cuma",
+    "Cumartesi",
+    "Pazar",
+  ];
+
   for (let i = 0; i < 7; i++) {
     const date = new Date(start);
     date.setUTCDate(start.getUTCDate() + i);
-    const dateStr = `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+    const dateStr = `${date.getUTCFullYear()}-${String(
+      date.getUTCMonth() + 1
+    ).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
     days.push({
       name: dayNames[i],
       date: dateStr,
       dayOfMonth: date.getUTCDate(),
-      month: date.getUTCMonth() + 1
+      month: date.getUTCMonth() + 1,
     });
   }
   return days;
@@ -67,24 +80,36 @@ const getDaysOfWeek = (weekStart) => {
 const formatDate = (dateStr) => {
   const date = new Date(dateStr);
   const day = date.getDate();
-  const months = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", 
-                  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+  const months = [
+    "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+    "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+  ];
   return `${day} ${months[date.getMonth()]}`;
 };
 
 const MONTHS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
-  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"
+  "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ];
 
 const DEFAULT_COLORS = [
   "#E91E63", "#2196F3", "#FF5722", "#9C27B0", "#00BCD4", "#4CAF50",
   "#CDDC39", "#FF9800", "#795548", "#607D8B", "#F44336", "#673AB7",
-  "#3F51B5", "#009688", "#8BC34A", "#FFC107", "#FF5252", "#7C4DFF"
+  "#3F51B5", "#009688", "#8BC34A", "#FFC107", "#FF5252", "#7C4DFF",
 ];
 
-// Components
-const EmployeeSelect = ({ employees, value, onChange, placeholder = "Temsilci Seçin" }) => {
+// Güvenli normalizer: API'den array gelmezse [] yap
+const ensureArray = (v) => (Array.isArray(v) ? v : []);
+
+// -------------------- Components --------------------
+const EmployeeSelect = ({
+  employees,
+  value,
+  onChange,
+  placeholder = "Temsilci Seçin",
+}) => {
+  const safeEmployees = ensureArray(employees);
+
   return (
     <select
       value={value}
@@ -92,7 +117,7 @@ const EmployeeSelect = ({ employees, value, onChange, placeholder = "Temsilci Se
       className="w-full p-2 border rounded-lg text-sm bg-white"
     >
       <option value="">{placeholder}</option>
-      {employees.map((emp) => (
+      {safeEmployees.map((emp) => (
         <option key={emp.id} value={emp.id}>
           {emp.name} {emp.position === "TL" ? "(TL)" : ""}
         </option>
@@ -103,9 +128,11 @@ const EmployeeSelect = ({ employees, value, onChange, placeholder = "Temsilci Se
 
 const LeaveSlot = ({ employee, onRemove }) => {
   if (!employee) {
-    return <div className="h-8 border border-dashed border-gray-300 rounded"></div>;
+    return (
+      <div className="h-8 border border-dashed border-gray-300 rounded"></div>
+    );
   }
-  
+
   return (
     <div
       className="h-8 rounded flex items-center justify-between px-2 text-white text-xs font-medium cursor-pointer hover:opacity-80"
@@ -118,27 +145,58 @@ const LeaveSlot = ({ employee, onRemove }) => {
   );
 };
 
-const DayColumn = ({ day, leaves, employees, onAddLeave, onRemoveLeave, isToday }) => {
+const DayColumn = ({
+  day,
+  leaves,
+  employees,
+  onAddLeave,
+  onRemoveLeave,
+  isToday,
+}) => {
   const [showDropdown, setShowDropdown] = useState(false);
-  const dayLeaves = leaves.filter(l => l.date === day.date);
-  const availableEmployees = employees.filter(
-    emp => !dayLeaves.some(l => l.employee_id === emp.id)
+
+  const safeLeaves = ensureArray(leaves);
+  const safeEmployees = ensureArray(employees);
+
+  const dayLeaves = safeLeaves.filter((l) => l?.date === day.date);
+
+  const availableEmployees = safeEmployees.filter(
+    (emp) => !dayLeaves.some((l) => String(l.employee_id) === String(emp.id))
   );
 
-  const getEmployeeById = (id) => employees.find(e => e.id === id);
-  
-  const needsApproval = ["Pazartesi", "Cuma", "Cumartesi", "Pazar"].includes(day.name);
+  const getEmployeeById = (id) => {
+    if (!Array.isArray(safeEmployees)) return null;
+    return safeEmployees.find((e) => String(e.id) === String(id)) || null;
+  };
+
+  const needsApproval = ["Pazartesi", "Cuma", "Cumartesi", "Pazar"].includes(
+    day.name
+  );
   const isFlexDay = ["Salı", "Çarşamba", "Perşembe"].includes(day.name);
 
   return (
-    <div className={`min-w-[100px] flex-1 ${isToday ? 'bg-red-50' : ''}`}>
-      <div className={`text-center py-2 font-medium text-xs border-b ${needsApproval ? 'bg-yellow-100' : isFlexDay ? 'bg-green-100' : 'bg-gray-100'}`}>
+    <div className={`min-w-[100px] flex-1 ${isToday ? "bg-red-50" : ""}`}>
+      <div
+        className={`text-center py-2 font-medium text-xs border-b ${
+          needsApproval
+            ? "bg-yellow-100"
+            : isFlexDay
+            ? "bg-green-100"
+            : "bg-gray-100"
+        }`}
+      >
         <div>{day.name}</div>
-        <div className="text-xs text-gray-500">{day.dayOfMonth}/{day.month}</div>
+        <div className="text-xs text-gray-500">
+          {day.dayOfMonth}/{day.month}
+        </div>
       </div>
+
       <div className="p-1 space-y-1">
         {[0, 1, 2, 3, 4, 5, 6].map((slot) => {
-          const leave = dayLeaves.find(l => l.slot === slot);
+          const leave = Array.isArray(dayLeaves)
+            ? dayLeaves.find((l) => l?.slot === slot)
+            : null;
+
           return (
             <LeaveSlot
               key={slot}
@@ -148,6 +206,7 @@ const DayColumn = ({ day, leaves, employees, onAddLeave, onRemoveLeave, isToday 
           );
         })}
       </div>
+
       {!isToday && (
         <div className="p-1">
           {showDropdown ? (
@@ -156,7 +215,9 @@ const DayColumn = ({ day, leaves, employees, onAddLeave, onRemoveLeave, isToday 
                 className="w-full p-1 text-xs border rounded bg-white"
                 onChange={(e) => {
                   if (e.target.value) {
-                    onAddLeave(day.date, e.target.value, dayLeaves.length);
+                    // slot olarak dayLeaves.length kullanıyorsun; 0..6 aralığında kalması için garanti:
+                    const nextSlot = Math.min(dayLeaves.length, 6);
+                    onAddLeave(day.date, e.target.value, nextSlot);
                     setShowDropdown(false);
                   }
                 }}
@@ -188,7 +249,7 @@ const DayColumn = ({ day, leaves, employees, onAddLeave, onRemoveLeave, isToday 
 
 const WeeklySchedule = ({ week, leaves, employees, onAddLeave, onRemoveLeave }) => {
   const days = getDaysOfWeek(week.start);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
@@ -215,27 +276,37 @@ const WeeklySchedule = ({ week, leaves, employees, onAddLeave, onRemoveLeave }) 
 const RulesPanel = ({ collapsed, onToggle }) => {
   return (
     <div className="bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
-      <button 
+      <button
         onClick={onToggle}
         className="w-full p-3 flex justify-between items-center text-left"
       >
         <h3 className="font-bold text-lg text-yellow-800">KULLANIM KURALLARI</h3>
-        <span className="text-yellow-600">{collapsed ? '▼' : '▲'}</span>
+        <span className="text-yellow-600">{collapsed ? "▼" : "▲"}</span>
       </button>
       {!collapsed && (
         <div className="px-4 pb-4">
           <ul className="space-y-2 text-sm text-yellow-900">
             <li className="flex items-start">
               <span className="text-yellow-600 mr-2">•</span>
-              <span>Pazartesi, Cuma, Cumartesi ve Pazar günleri izin kullanmak isteyen temsilcilerimizin, öncelikle takım liderlerinden onay almaları gerekmektedir.</span>
+              <span>
+                Pazartesi, Cuma, Cumartesi ve Pazar günleri izin kullanmak isteyen
+                temsilcilerimizin, öncelikle takım liderlerinden onay almaları
+                gerekmektedir.
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-red-600 mr-2">•</span>
-              <span className="text-red-700 font-medium">Bu günler için izin kullanımı yasaktır. Yalnızca önemli ve zorunlu durumlarda istisna uygulanabilir.</span>
+              <span className="text-red-700 font-medium">
+                Bu günler için izin kullanımı yasaktır. Yalnızca önemli ve zorunlu
+                durumlarda istisna uygulanabilir.
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-green-600 mr-2">•</span>
-              <span>Salı, Çarşamba ve Perşembe günleri izinler; 4-4-3, 3-4-4 veya 4-3-3 şeklinde planlanabilir.</span>
+              <span>
+                Salı, Çarşamba ve Perşembe günleri izinler; 4-4-3, 3-4-4 veya 4-3-3
+                şeklinde planlanabilir.
+              </span>
             </li>
             <li className="flex items-start">
               <span className="text-purple-600 mr-2">•</span>
@@ -243,7 +314,11 @@ const RulesPanel = ({ collapsed, onToggle }) => {
             </li>
             <li className="flex items-start">
               <span className="text-blue-600 mr-2">•</span>
-              <span>Ayça Çisem Çoban'ın izinli olduğu günlerde, ek olarak iki kişi daha izin kullanabilir; bu günlerde toplam üç kişilik izin hakkı bulunmaktadır.</span>
+              <span>
+                Ayça Çisem Çoban'ın izinli olduğu günlerde, ek olarak iki kişi daha
+                izin kullanabilir; bu günlerde toplam üç kişilik izin hakkı
+                bulunmaktadır.
+              </span>
             </li>
           </ul>
         </div>
@@ -252,11 +327,19 @@ const RulesPanel = ({ collapsed, onToggle }) => {
   );
 };
 
-// Employee Management Component
+// -------------------- Employee Management --------------------
 const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) => {
+  const safeEmployees = ensureArray(employees);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    short_name: "",
+    position: "Agent",
+    work_type: "Office",
+    color: "",
+  });
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -267,7 +350,13 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
       } else {
         onAdd(formData);
       }
-      setFormData({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
+      setFormData({
+        name: "",
+        short_name: "",
+        position: "Agent",
+        work_type: "Office",
+        color: "",
+      });
       setShowAddForm(false);
     }
   };
@@ -279,14 +368,20 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
       short_name: emp.short_name,
       position: emp.position || "Agent",
       work_type: emp.work_type || "Office",
-      color: emp.color
+      color: emp.color,
     });
     setShowAddForm(true);
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setFormData({ name: "", short_name: "", position: "Agent", work_type: "Office", color: "" });
+    setFormData({
+      name: "",
+      short_name: "",
+      position: "Agent",
+      work_type: "Office",
+      color: "",
+    });
     setShowAddForm(false);
   };
 
@@ -295,20 +390,26 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <div className="bg-blue-600 text-white p-4 flex justify-between items-center">
           <h2 className="text-xl font-bold">Temsilci Yönetimi</h2>
-          <button onClick={onClose} className="text-white hover:text-gray-200 text-2xl">&times;</button>
+          <button onClick={onClose} className="text-white hover:text-gray-200 text-2xl">
+            &times;
+          </button>
         </div>
-        
+
         <div className="p-4 overflow-y-auto max-h-[calc(90vh-120px)]">
-          {/* Add/Edit Form */}
           {showAddForm ? (
             <form onSubmit={handleSubmit} className="bg-gray-50 p-4 rounded-lg mb-4">
-              <h3 className="font-bold mb-3">{editingId ? "Temsilci Düzenle" : "Yeni Temsilci Ekle"}</h3>
+              <h3 className="font-bold mb-3">
+                {editingId ? "Temsilci Düzenle" : "Yeni Temsilci Ekle"}
+              </h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <input
                   type="text"
                   placeholder="Ad Soyad (örn: AHMET YILMAZ)"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value.toUpperCase() })
+                  }
                   className="p-2 border rounded-lg text-sm"
                   required
                 />
@@ -316,7 +417,9 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                   type="text"
                   placeholder="Kısa Ad (örn: AHMET Y.)"
                   value={formData.short_name}
-                  onChange={(e) => setFormData({ ...formData, short_name: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, short_name: e.target.value.toUpperCase() })
+                  }
                   className="p-2 border rounded-lg text-sm"
                   required
                 />
@@ -339,13 +442,17 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
                 <div className="flex items-center gap-2">
                   <input
                     type="color"
-                    value={formData.color || DEFAULT_COLORS[employees.length % DEFAULT_COLORS.length]}
+                    value={
+                      formData.color ||
+                      DEFAULT_COLORS[safeEmployees.length % DEFAULT_COLORS.length]
+                    }
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
                     className="w-10 h-10 rounded cursor-pointer"
                   />
                   <span className="text-sm text-gray-600">Renk Seçin</span>
                 </div>
               </div>
+
               <div className="flex gap-2 mt-4">
                 <button
                   type="submit"
@@ -371,24 +478,22 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
             </button>
           )}
 
-          {/* Employee List */}
           <div className="space-y-2">
-            {employees.map((emp) => (
-              <div
-                key={emp.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
+            {safeEmployees.map((emp) => (
+              <div key={emp.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <div
                     className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs"
                     style={{ backgroundColor: emp.color }}
                   >
-                    {emp.short_name.substring(0, 2)}
+                    {String(emp.short_name || "").substring(0, 2)}
                   </div>
                   <div>
                     <div className="font-medium">{emp.name}</div>
                     <div className="text-sm text-gray-500">
-                      {emp.position === "TL" ? "Takım Lideri" : "Temsilci"} • {emp.work_type === "HomeOffice" ? "Home Office" : "Şirket"} • {emp.short_name}
+                      {emp.position === "TL" ? "Takım Lideri" : "Temsilci"} •{" "}
+                      {emp.work_type === "HomeOffice" ? "Home Office" : "Şirket"} •{" "}
+                      {emp.short_name}
                     </div>
                   </div>
                 </div>
@@ -413,13 +518,17 @@ const EmployeeManagement = ({ employees, onAdd, onUpdate, onDelete, onClose }) =
               </div>
             ))}
           </div>
+
         </div>
       </div>
     </div>
   );
 };
 
+// -------------------- Overtime --------------------
 const OvertimeForm = ({ employees, onSubmit }) => {
+  const safeEmployees = ensureArray(employees);
+
   const [employeeId, setEmployeeId] = useState("");
   const [date, setDate] = useState("");
   const [hours, setHours] = useState("");
@@ -439,7 +548,7 @@ const OvertimeForm = ({ employees, onSubmit }) => {
       <h3 className="font-bold text-lg mb-3 text-gray-800">Fazla Çalışma Ekle</h3>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
         <EmployeeSelect
-          employees={employees}
+          employees={safeEmployees}
           value={employeeId}
           onChange={setEmployeeId}
           placeholder="Temsilci Seçin"
@@ -472,7 +581,12 @@ const OvertimeForm = ({ employees, onSubmit }) => {
 };
 
 const OvertimeTable = ({ overtime, employees, onDelete }) => {
-  const getEmployeeById = (id) => employees.find(e => e.id === id);
+  const safeEmployees = ensureArray(employees);
+  const safeOvertime = ensureArray(overtime);
+
+  const getEmployeeById = (id) => {
+    return safeEmployees.find((e) => String(e.id) === String(id)) || null;
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
@@ -490,21 +604,21 @@ const OvertimeTable = ({ overtime, employees, onDelete }) => {
             </tr>
           </thead>
           <tbody>
-            {overtime.length === 0 ? (
+            {safeOvertime.length === 0 ? (
               <tr>
                 <td colSpan={4} className="p-4 text-center text-gray-500">
                   Henüz fazla çalışma kaydı yok
                 </td>
               </tr>
             ) : (
-              overtime.map((item) => {
+              safeOvertime.map((item) => {
                 const emp = getEmployeeById(item.employee_id);
                 return (
                   <tr key={item.id} className="border-b hover:bg-gray-50">
                     <td className="p-2">
                       <span
                         className="px-2 py-1 rounded text-white text-xs"
-                        style={{ backgroundColor: emp?.color || '#666' }}
+                        style={{ backgroundColor: emp?.color || "#666" }}
                       >
                         {emp?.short_name || item.employee_id}
                       </span>
@@ -534,7 +648,10 @@ const OvertimeTable = ({ overtime, employees, onDelete }) => {
   );
 };
 
+// -------------------- Leave Types --------------------
 const LeaveTypeForm = ({ employees, onSubmit }) => {
+  const safeEmployees = ensureArray(employees);
+
   const [employeeId, setEmployeeId] = useState("");
   const [date, setDate] = useState("");
   const [leaveType, setLeaveType] = useState("");
@@ -543,11 +660,7 @@ const LeaveTypeForm = ({ employees, onSubmit }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (employeeId && date && leaveType) {
-      const data = {
-        employee_id: employeeId,
-        date,
-        leave_type: leaveType,
-      };
+      const data = { employee_id: employeeId, date, leave_type: leaveType };
       if (leaveType === "compensatory" && hours) {
         data.hours = parseFloat(hours);
       }
@@ -564,7 +677,7 @@ const LeaveTypeForm = ({ employees, onSubmit }) => {
       <h3 className="font-bold text-lg mb-3 text-gray-800">İzin Türü Ekle</h3>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
         <EmployeeSelect
-          employees={employees}
+          employees={safeEmployees}
           value={employeeId}
           onChange={setEmployeeId}
           placeholder="Temsilci Seçin"
@@ -609,22 +722,36 @@ const LeaveTypeForm = ({ employees, onSubmit }) => {
 };
 
 const LeaveTypeTable = ({ leaveTypes, employees, onDelete }) => {
-  const getEmployeeById = (id) => employees.find(e => e.id === id);
+  const safeEmployees = ensureArray(employees);
+  const safeLeaveTypes = ensureArray(leaveTypes);
+
+  const getEmployeeById = (id) => {
+    return safeEmployees.find((e) => String(e.id) === String(id)) || null;
+  };
+
   const getLeaveTypeName = (type) => {
     switch (type) {
-      case "unpaid": return "Ücretsiz İzin";
-      case "annual": return "Yıllık İzin";
-      case "compensatory": return "Telafi İzni";
-      default: return type;
+      case "unpaid":
+        return "Ücretsiz İzin";
+      case "annual":
+        return "Yıllık İzin";
+      case "compensatory":
+        return "Telafi İzni";
+      default:
+        return type;
     }
   };
 
   const getLeaveTypeColor = (type) => {
     switch (type) {
-      case "unpaid": return "bg-red-100 text-red-800";
-      case "annual": return "bg-blue-100 text-blue-800";
-      case "compensatory": return "bg-orange-100 text-orange-800";
-      default: return "bg-gray-100 text-gray-800";
+      case "unpaid":
+        return "bg-red-100 text-red-800";
+      case "annual":
+        return "bg-blue-100 text-blue-800";
+      case "compensatory":
+        return "bg-orange-100 text-orange-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -645,21 +772,21 @@ const LeaveTypeTable = ({ leaveTypes, employees, onDelete }) => {
             </tr>
           </thead>
           <tbody>
-            {leaveTypes.length === 0 ? (
+            {safeLeaveTypes.length === 0 ? (
               <tr>
                 <td colSpan={5} className="p-4 text-center text-gray-500">
                   Henüz izin türü kaydı yok
                 </td>
               </tr>
             ) : (
-              leaveTypes.map((item) => {
+              safeLeaveTypes.map((item) => {
                 const emp = getEmployeeById(item.employee_id);
                 return (
                   <tr key={item.id} className="border-b hover:bg-gray-50">
                     <td className="p-2">
                       <span
                         className="px-2 py-1 rounded text-white text-xs"
-                        style={{ backgroundColor: emp?.color || '#666' }}
+                        style={{ backgroundColor: emp?.color || "#666" }}
                       >
                         {emp?.short_name || item.employee_id}
                       </span>
@@ -696,31 +823,26 @@ const LeaveTypeTable = ({ leaveTypes, employees, onDelete }) => {
   );
 };
 
-// Yemek Listesi Bileşeni
+// -------------------- Meal List --------------------
 const MealList = ({ week, leaves, employees }) => {
   const days = getDaysOfWeek(week.start);
-  
-  // Sadece şirket çalışanlarını filtrele (Home Office olmayanlar)
-  // work_type yoksa veya "Office" ise şirket çalışanı say
-  const officeEmployees = employees.filter(emp => !emp.work_type || emp.work_type === "Office");
-  const homeOfficeEmployees = employees.filter(emp => emp.work_type === "HomeOffice");
+
+  const safeLeaves = ensureArray(leaves);
+  const safeEmployees = ensureArray(employees);
+
+  const officeEmployees = safeEmployees.filter((emp) => !emp.work_type || emp.work_type === "Office");
+  const homeOfficeEmployees = safeEmployees.filter((emp) => emp.work_type === "HomeOffice");
   const totalOfficeEmployees = officeEmployees.length;
-  
-  // Her gün için çalışan (izinli olmayan) kişileri hesapla
+
   const getDayData = (day) => {
-    const dayLeaves = leaves.filter(l => l.date === day.date);
-    const onLeaveIds = dayLeaves.map(l => l.employee_id);
-    const workingEmployees = officeEmployees.filter(emp => !onLeaveIds.includes(emp.id));
-    const onLeaveEmployees = officeEmployees.filter(emp => onLeaveIds.includes(emp.id));
-    
-    return {
-      working: workingEmployees,
-      onLeave: onLeaveEmployees,
-      count: workingEmployees.length
-    };
+    const dayLeaves = safeLeaves.filter((l) => l?.date === day.date);
+    const onLeaveIds = dayLeaves.map((l) => String(l.employee_id));
+    const workingEmployees = officeEmployees.filter((emp) => !onLeaveIds.includes(String(emp.id)));
+    const onLeaveEmployees = officeEmployees.filter((emp) => onLeaveIds.includes(String(emp.id)));
+
+    return { working: workingEmployees, onLeave: onLeaveEmployees, count: workingEmployees.length };
   };
 
-  // Haftalık toplam yemek sayısı
   const weeklyTotal = days.reduce((total, day) => total + getDayData(day).count, 0);
 
   return (
@@ -728,7 +850,7 @@ const MealList = ({ week, leaves, employees }) => {
       <div className="bg-orange-500 text-white text-center py-2 font-bold text-sm">
         {week.label} - Yemek Listesi
       </div>
-      
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-gray-100">
@@ -746,7 +868,9 @@ const MealList = ({ week, leaves, employees }) => {
               return (
                 <tr key={day.date} className="border-b hover:bg-gray-50">
                   <td className="p-2 font-medium border-r">{day.name}</td>
-                  <td className="p-2 border-r">{day.dayOfMonth}/{day.month}</td>
+                  <td className="p-2 border-r">
+                    {day.dayOfMonth}/{day.month}
+                  </td>
                   <td className="p-2 text-center border-r">
                     <span className="bg-orange-500 text-white px-3 py-1 rounded-full font-bold">
                       {dayData.count}
@@ -755,7 +879,7 @@ const MealList = ({ week, leaves, employees }) => {
                   <td className="p-2 border-r">
                     <div className="flex flex-wrap gap-1">
                       {dayData.working.length > 0 ? (
-                        dayData.working.map(emp => (
+                        dayData.working.map((emp) => (
                           <span
                             key={emp.id}
                             className="px-2 py-1 rounded text-white text-xs"
@@ -772,7 +896,7 @@ const MealList = ({ week, leaves, employees }) => {
                   <td className="p-2">
                     <div className="flex flex-wrap gap-1">
                       {dayData.onLeave.length > 0 ? (
-                        dayData.onLeave.map(emp => (
+                        dayData.onLeave.map((emp) => (
                           <span
                             key={emp.id}
                             className="px-2 py-1 rounded text-white text-xs opacity-60"
@@ -792,8 +916,7 @@ const MealList = ({ week, leaves, employees }) => {
           </tbody>
         </table>
       </div>
-      
-      {/* Haftalık Özet */}
+
       <div className="bg-orange-50 p-3 border-t">
         <div className="flex flex-wrap justify-between items-center text-sm gap-2">
           <div>
@@ -820,61 +943,68 @@ const TabButton = ({ active, onClick, children, color }) => (
   <button
     onClick={onClick}
     className={`px-4 py-2 font-medium text-sm rounded-t-lg transition-colors ${
-      active
-        ? `${color} text-white`
-        : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+      active ? `${color} text-white` : "bg-gray-200 text-gray-600 hover:bg-gray-300"
     }`}
   >
     {children}
   </button>
 );
 
+// -------------------- App --------------------
 function App() {
   const [employees, setEmployees] = useState([]);
   const [leaves, setLeaves] = useState([]);
   const [overtime, setOvertime] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
-  const [selectedMonth, setSelectedMonth] = useState(0); // Ocak ile başla
+  const [selectedMonth, setSelectedMonth] = useState(0);
   const [activeTab, setActiveTab] = useState("schedule");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rulesCollapsed, setRulesCollapsed] = useState(true);
   const [showEmployeeManagement, setShowEmployeeManagement] = useState(false);
-  const [currentUserId, setCurrentUserId] = useState(localStorage.getItem('currentUserId') || "");
+  const [currentUserId, setCurrentUserId] = useState(
+    localStorage.getItem("currentUserId") || ""
+  );
 
-  const allWeeks = getWeeksOfYear2026();
-  
-  const weeksOfMonth = allWeeks.filter(week => {
+  const allWeeks = useMemo(() => getWeeksOfYear2026(), []);
+
+  const safeEmployees = ensureArray(employees);
+  const safeLeaves = ensureArray(leaves);
+
+  const weeksOfMonth = allWeeks.filter((week) => {
     const weekStart = new Date(week.start);
     const weekEnd = new Date(week.end);
     return weekStart.getMonth() === selectedMonth || weekEnd.getMonth() === selectedMonth;
   });
 
-  // Mevcut kullanıcı TL mi?
-  const currentUser = Array.isArray(employees)
-  ? employees.find(e => String(e.id) === String(currentUserId))
-  : null;
+  const currentUser = safeEmployees.find(
+    (e) => String(e.id) === String(currentUserId)
+  ) || null;
 
   const isTeamLeader = currentUser?.position === "TL";
 
   const handleUserChange = (userId) => {
     setCurrentUserId(userId);
-    localStorage.setItem('currentUserId', userId);
+    localStorage.setItem("currentUserId", userId);
   };
 
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
+
       const [empRes, leavesRes, overtimeRes, leaveTypesRes] = await Promise.all([
         axios.get(`${API}/employees`),
         axios.get(`${API}/leaves`),
         axios.get(`${API}/overtime`),
         axios.get(`${API}/leave-types`),
       ]);
-      setEmployees(empRes.data);
-      setLeaves(leavesRes.data);
-      setOvertime(overtimeRes.data);
-      setLeaveTypes(leaveTypesRes.data);
+
+      // KRİTİK: her zaman array’e çevir
+      setEmployees(ensureArray(empRes.data));
+      setLeaves(ensureArray(leavesRes.data));
+      setOvertime(ensureArray(overtimeRes.data));
+      setLeaveTypes(ensureArray(leaveTypesRes.data));
+
       setError(null);
     } catch (err) {
       console.error("Error fetching data:", err);
@@ -888,7 +1018,7 @@ function App() {
     fetchData();
   }, [fetchData]);
 
-  // Employee CRUD
+  // CRUD
   const handleAddEmployee = async (data) => {
     try {
       await axios.post(`${API}/employees`, data);
@@ -918,19 +1048,20 @@ function App() {
 
   const handleAddLeave = async (date, employeeId, slot) => {
     try {
-      const week = allWeeks.find(w => {
+      const week = allWeeks.find((w) => {
         const start = new Date(w.start);
         const end = new Date(w.end);
         const d = new Date(date);
         return d >= start && d <= end;
       });
-      
+
       await axios.post(`${API}/leaves`, {
         employee_id: employeeId,
         date,
         week_start: week?.start || date,
         slot,
       });
+
       fetchData();
     } catch (err) {
       alert(err.response?.data?.detail || "İzin eklenirken hata oluştu");
@@ -1000,7 +1131,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
       <header className="bg-blue-700 text-white py-3 shadow-lg sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center flex-wrap gap-2">
@@ -1012,12 +1142,13 @@ function App() {
                 className="bg-blue-600 text-white border border-blue-500 rounded px-2 py-1 text-sm"
               >
                 <option value="">Kullanıcı Seçin</option>
-                {employees.map((emp) => (
+                {safeEmployees.map((emp) => (
                   <option key={emp.id} value={emp.id}>
                     {emp.short_name} {emp.position === "TL" ? "(TL)" : ""}
                   </option>
                 ))}
               </select>
+
               {isTeamLeader && (
                 <button
                   onClick={() => setShowEmployeeManagement(true)}
@@ -1028,6 +1159,7 @@ function App() {
               )}
             </div>
           </div>
+
           {currentUser && (
             <div className="text-center text-blue-200 text-sm mt-1">
               Hoşgeldin, {currentUser.name} {isTeamLeader && "(Takım Lideri)"}
@@ -1036,10 +1168,9 @@ function App() {
         </div>
       </header>
 
-      {/* Employee Management Modal */}
       {showEmployeeManagement && (
         <EmployeeManagement
-          employees={employees}
+          employees={safeEmployees}
           onAdd={handleAddEmployee}
           onUpdate={handleUpdateEmployee}
           onDelete={handleDeleteEmployee}
@@ -1047,9 +1178,7 @@ function App() {
         />
       )}
 
-      {/* Main Content */}
       <main className="container mx-auto px-2 py-4">
-        {/* Tabs */}
         <div className="flex space-x-2 mb-4 overflow-x-auto">
           <TabButton
             active={activeTab === "schedule"}
@@ -1083,12 +1212,11 @@ function App() {
 
         {activeTab === "schedule" && (
           <>
-            <RulesPanel 
-              collapsed={rulesCollapsed} 
-              onToggle={() => setRulesCollapsed(!rulesCollapsed)} 
+            <RulesPanel
+              collapsed={rulesCollapsed}
+              onToggle={() => setRulesCollapsed(!rulesCollapsed)}
             />
 
-            {/* Month Selector */}
             <div className="bg-white rounded-lg shadow-md p-3 mb-4">
               <div className="flex flex-wrap gap-2 justify-center">
                 {MONTHS.map((month, index) => (
@@ -1097,8 +1225,8 @@ function App() {
                     onClick={() => setSelectedMonth(index)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedMonth === index
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     {month}
@@ -1107,29 +1235,29 @@ function App() {
               </div>
             </div>
 
-            {/* Weekly Schedules */}
             {weeksOfMonth.map((week) => (
               <WeeklySchedule
                 key={week.start}
                 week={week}
-                leaves={leaves}
-                employees={employees}
+                leaves={safeLeaves}
+                employees={safeEmployees}
                 onAddLeave={handleAddLeave}
                 onRemoveLeave={handleRemoveLeave}
               />
             ))}
 
-            {/* Employee Legend */}
             <div className="bg-white rounded-lg shadow-md p-4">
-              <h3 className="font-bold text-lg mb-3 text-gray-800">Temsilciler ({employees.length})</h3>
+              <h3 className="font-bold text-lg mb-3 text-gray-800">
+                Temsilciler ({safeEmployees.length})
+              </h3>
               <div className="flex flex-wrap gap-2">
-                {employees.map((emp) => (
+                {safeEmployees.map((emp) => (
                   <div
                     key={emp.id}
                     className="px-3 py-1 rounded text-white text-xs"
                     style={{ backgroundColor: emp.color }}
                   >
-                    {emp.short_name} {emp.role === "TL" ? "(TL)" : ""}
+                    {emp.short_name} {emp.position === "TL" ? "(TL)" : ""}
                   </div>
                 ))}
               </div>
@@ -1139,10 +1267,10 @@ function App() {
 
         {activeTab === "overtime" && (
           <>
-            <OvertimeForm employees={employees} onSubmit={handleAddOvertime} />
+            <OvertimeForm employees={safeEmployees} onSubmit={handleAddOvertime} />
             <OvertimeTable
               overtime={overtime}
-              employees={employees}
+              employees={safeEmployees}
               onDelete={isTeamLeader ? handleDeleteOvertime : null}
             />
           </>
@@ -1150,10 +1278,10 @@ function App() {
 
         {activeTab === "leaveTypes" && (
           <>
-            <LeaveTypeForm employees={employees} onSubmit={handleAddLeaveType} />
+            <LeaveTypeForm employees={safeEmployees} onSubmit={handleAddLeaveType} />
             <LeaveTypeTable
               leaveTypes={leaveTypes}
-              employees={employees}
+              employees={safeEmployees}
               onDelete={isTeamLeader ? handleDeleteLeaveType : null}
             />
           </>
@@ -1161,23 +1289,25 @@ function App() {
 
         {activeTab === "mealList" && (
           <>
-            {/* Şirket Çalışanı Bilgisi */}
             <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-              <h3 className="font-bold text-lg text-orange-800 mb-2">Yemek Listesi</h3>
+              <h3 className="font-bold text-lg text-orange-800 mb-2">
+                Yemek Listesi
+              </h3>
               <p className="text-sm text-orange-700">
                 Şirket çalışanları için yemek listesi. Home Office çalışanlar dahil edilmez.
               </p>
               <div className="flex flex-wrap gap-4 mt-2 text-sm">
                 <p className="text-orange-600">
-                  <strong>Şirket Çalışanı:</strong> {employees.filter(e => !e.work_type || e.work_type === "Office").length} kişi
+                  <strong>Şirket Çalışanı:</strong>{" "}
+                  {safeEmployees.filter((e) => !e.work_type || e.work_type === "Office").length} kişi
                 </p>
                 <p className="text-blue-600">
-                  <strong>Home Office:</strong> {employees.filter(e => e.work_type === "HomeOffice").length} kişi
+                  <strong>Home Office:</strong>{" "}
+                  {safeEmployees.filter((e) => e.work_type === "HomeOffice").length} kişi
                 </p>
               </div>
             </div>
 
-            {/* Month Selector */}
             <div className="bg-white rounded-lg shadow-md p-3 mb-4">
               <div className="flex flex-wrap gap-2 justify-center">
                 {MONTHS.map((month, index) => (
@@ -1186,8 +1316,8 @@ function App() {
                     onClick={() => setSelectedMonth(index)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedMonth === index
-                        ? 'bg-orange-500 text-white'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? "bg-orange-500 text-white"
+                        : "bg-gray-200 text-gray-700 hover:bg-gray-300"
                     }`}
                   >
                     {month}
@@ -1196,20 +1326,13 @@ function App() {
               </div>
             </div>
 
-            {/* Weekly Meal Lists */}
             {weeksOfMonth.map((week) => (
-              <MealList
-                key={week.start}
-                week={week}
-                leaves={leaves}
-                employees={employees}
-              />
+              <MealList key={week.start} week={week} leaves={safeLeaves} employees={safeEmployees} />
             ))}
           </>
         )}
       </main>
 
-      {/* Footer */}
       <footer className="bg-gray-800 text-white py-4 mt-8">
         <div className="container mx-auto px-4 text-center text-sm">
           © 2026 İzin Yönetim Sistemi
