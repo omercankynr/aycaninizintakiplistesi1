@@ -512,12 +512,16 @@ const OvertimeTable = ({ overtime, employees, onDelete }) => {
                     <td className="p-2">{formatDate(item.date)}</td>
                     <td className="p-2 font-medium">{item.hours} saat</td>
                     <td className="p-2">
-                      <button
-                        onClick={() => onDelete(item.id)}
-                        className="text-red-500 hover:text-red-700"
-                      >
-                        Sil
-                      </button>
+                      {onDelete ? (
+                        <button
+                          onClick={() => onDelete(item.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          Sil
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 );
