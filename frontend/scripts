@@ -7,6 +7,7 @@ const path = require("path");
 
 const indexPath = path.join(__dirname, "..", "build", "index.html");
 
+// ❗ DOĞRU KONTROL
 if (!fs.existsSync(indexPath)) {
   console.error("patch-indexhtml: build/index.html not found:", indexPath);
   process.exit(1);
@@ -15,16 +16,15 @@ if (!fs.existsSync(indexPath)) {
 let html = fs.readFileSync(indexPath, "utf8");
 
 // If already patched, do nothing
-if (html.includes('type="module"') || html.includes("type='module'")) {
+if (html.includes('type="module"')) {
   console.log("patch-indexhtml: index.html already has type=module. Skipping.");
   process.exit(0);
 }
 
 // CRA injects something like:
 // <script defer="defer" src="/static/js/main.xxxxx.js"></script>
-//
 // We add type="module" to that script tag.
-// Keep everything else unchanged.
+
 const re = /<script\b([^>]*?)\bsrc="\/static\/js\/main\.[^"]+\.js"([^>]*)><\/script>/i;
 
 if (!re.test(html)) {
@@ -32,14 +32,10 @@ if (!re.test(html)) {
   process.exit(1);
 }
 
-html = html.replace(re, (full, pre, post) => {
-  // If type already exists (rare), keep it.
+html = html.replace(re, (full) => {
   if (/type\s*=/.test(full)) return full;
-
-  // Insert type="module" right after <script
   return full.replace("<script", '<script type="module"');
 });
 
 fs.writeFileSync(indexPath, html, "utf8");
 console.log("patch-indexhtml: Added type=module to main script tag in build/index.html");
-
