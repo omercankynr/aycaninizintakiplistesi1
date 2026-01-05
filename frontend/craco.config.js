@@ -44,27 +44,39 @@ const webpackConfig = {
   },
   webpack: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      "@": path.resolve(__dirname, "src"),
     },
     configure: (webpackConfig) => {
-
       // Add ignored patterns to reduce watched directories
-        webpackConfig.watchOptions = {
-          ...webpackConfig.watchOptions,
-          ignored: [
-            '**/node_modules/**',
-            '**/.git/**',
-            '**/build/**',
-            '**/dist/**',
-            '**/coverage/**',
-            '**/public/**',
+      webpackConfig.watchOptions = {
+        ...webpackConfig.watchOptions,
+        ignored: [
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/build/**",
+          "**/dist/**",
+          "**/coverage/**",
+          "**/public/**",
         ],
       };
+
+      // ---- FIX: Ensure scripts are injected as ES Modules (fixes import.meta outside a module) ----
+      // CRA uses HtmlWebpackPlugin to generate build/index.html and inject main.*.js.
+      // Setting scriptLoading="module" makes the injected <script> have type="module".
+      const htmlPlugin = webpackConfig.plugins.find(
+        (p) => p && p.constructor && p.constructor.name === "HtmlWebpackPlugin"
+      );
+
+      if (htmlPlugin && htmlPlugin.userOptions) {
+        htmlPlugin.userOptions.scriptLoading = "module";
+      }
+      // ------------------------------------------------------------------------------------------
 
       // Add health check plugin to webpack if enabled
       if (config.enableHealthCheck && healthPluginInstance) {
         webpackConfig.plugins.push(healthPluginInstance);
       }
+
       return webpackConfig;
     },
   },
