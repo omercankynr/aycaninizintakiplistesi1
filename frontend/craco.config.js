@@ -60,32 +60,17 @@ const webpackConfig = {
         ],
       };
 
-      // ---- FIX 1: Ensure scripts are injected as ES Modules (fixes "import.meta outside a module" in browser) ----
+      // ---- FIX: Ensure scripts are injected as ES Modules (fixes import.meta outside a module in the browser) ----
+      // HtmlWebpackPlugin options location differs across versions; set both.
       const htmlPlugin = webpackConfig.plugins.find(
         (p) => p && p.constructor && p.constructor.name === "HtmlWebpackPlugin"
       );
-      if (htmlPlugin && htmlPlugin.userOptions) {
-        htmlPlugin.userOptions.scriptLoading = "module";
-      }
-      // ----------------------------------------------------------------------------------------------------------
 
-      // ---- FIX 2: Prevent webpack from erroring on standalone "import.meta" coming from dependencies (node_modules) ----
-      // Some ESM dependencies contain "import.meta" as a standalone expression. Webpack can treat it as a critical dependency.
-      // Disabling importMeta parsing avoids the build from failing on that pattern.
-      // Apply broadly to JS/MJS so it also covers node_modules ESM bundles.
-      if (webpackConfig.module && Array.isArray(webpackConfig.module.rules)) {
-        webpackConfig.module.rules.unshift({
-          test: /\.m?js$/,
-          parser: { importMeta: false },
-        });
-
-        // Also helps with some ESM-only packages that ship .mjs
-        webpackConfig.module.rules.unshift({
-          test: /\.mjs$/,
-          type: "javascript/auto",
-        });
+      if (htmlPlugin) {
+        if (htmlPlugin.userOptions) htmlPlugin.userOptions.scriptLoading = "module";
+        if (htmlPlugin.options) htmlPlugin.options.scriptLoading = "module";
       }
-      // ------------------------------------------------------------------------------------------------------------
+      // -----------------------------------------------------------------------------------------------------------
 
       // Add health check plugin to webpack if enabled
       if (config.enableHealthCheck && healthPluginInstance) {
